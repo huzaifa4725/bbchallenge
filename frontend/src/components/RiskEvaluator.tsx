@@ -21,9 +21,9 @@ const RiskEvaluator: React.FC = () => {
     fetchRiskScore(values.domain);
   };
 
-  const fetchRiskScore = (domain: string) => {
-    axios
-      .post<IRiskScore>(
+  const fetchRiskScore = async(domain: string) => {
+   try {
+    const {data} = await  axios.post<IRiskScore>(
         `${process.env.REACT_APP_DNS_SERVER_URL}dns/riskscore/`,
         {
           domainName: domain,
@@ -33,35 +33,32 @@ const RiskEvaluator: React.FC = () => {
             'Content-Type': 'application/json',
           },
         }
-      )
-      .then((response) => {
-        if (response.data?.riskScore === -1) {
+      );
+    
+      if (data.riskScore === -1) {
           showNotification(
             NotificationType.error,
             'Error',
             'Domain configuration not found. Please check domain name'
           );
         } else if (
-          response.data?.riskScore >= 0 &&
-          response.data?.riskScore <= 3
+          data.riskScore >= 0 &&
+          data.riskScore <= 3
         ) {
-          setRiskScore(response.data?.riskScore as RiskScore);
+          setRiskScore(data.riskScore as RiskScore);
           setShowGauge(true);
         }
         setLoading(false);
-      })
-      .catch((ex) => {
-        let error = axios.isCancel(ex)
-          ? 'Request Cancelled'
-          : ex.code === 'ECONNABORTED'
-          ? 'A timeout has occurred'
-          : ex?.response?.status === 404
+      
+    }
+    catch(ex:any) {
+        let error =  ex?.response?.status === 404
           ? 'Resource Not Found'
           : 'An unexpected error has occurred';
 
         showNotification(NotificationType.error, 'Error', error);
         setLoading(false);
-      });
+      };
   };
   return (
     <>

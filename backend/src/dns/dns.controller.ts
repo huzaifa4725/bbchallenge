@@ -1,4 +1,10 @@
-import { Controller, Post, Body, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { DnsService } from './dns.service';
 import { RiskScoreDto } from './dns.dto';
 @Controller('dns')
@@ -6,10 +12,13 @@ export class DnsController {
   constructor(private readonly dnsService: DnsService) {}
 
   @Post('riskscore')
-  @HttpCode(200)
   async getRiskScore(@Body() riskScoreDto: RiskScoreDto) {
-    const data = await this.dnsService.getDnsData(riskScoreDto.domainName);
-    const riskScore = this.dnsService.calculateRisk(data);
-    return { riskScore };
+    try {
+      const data = await this.dnsService.getDnsData(riskScoreDto.domainName);
+      const riskScore = this.dnsService.calculateRisk(data);
+      return { riskScore };
+    } catch (error) {
+      throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
+    }
   }
 }
